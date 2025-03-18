@@ -55,9 +55,12 @@ const ReviewFineTune = () => {
     dispatch(setAddOns(updatedAddOns));
   };
 
-  const total =
-    planPrice +
-    addOns.reduce((sum, addOn) => sum + addOn.price * addOn.quantity, 0);
+  const total = parseFloat(
+    (
+      planPrice +
+      addOns.reduce((sum, addOn) => sum + addOn.price * addOn.quantity, 0)
+    ).toFixed(2)
+  );
 
   return (
     <Box sx={{ p: 3 }}>

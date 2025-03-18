@@ -1,6 +1,6 @@
 "use client";
 
-import { setActiveStep, updateCustomerInfo } from "@/redux/orderSlice";
+import { updateCustomerInfo } from "@/redux/orderSlice";
 import { RootState } from "@/redux/store";
 import {
   Button,
@@ -49,8 +49,6 @@ const CustomerInfo = ({ handleNext }: { handleNext: () => void }) => {
     );
 
     handleNext();
-
-    dispatch(setActiveStep(1));
   };
 
   return (

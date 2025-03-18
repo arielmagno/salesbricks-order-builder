@@ -23,7 +23,7 @@ interface OrderState {
 }
 
 const initialState: OrderState = {
-  activeStep: 0,
+  activeStep: 1,
   customerName: "",
   customerAddress: {
     line1: "",

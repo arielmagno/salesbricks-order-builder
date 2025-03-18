@@ -46,7 +46,7 @@ const ContractTerms: React.FC = () => {
 
   const [customMonths, setCustomMonths] = useState<number | "">("");
 
-  /** Helper function to calculate end date */
+  /** Helper function to auto-calculate end date */
   const updateEndDate = (startDate: string, months: number): string => {
     if (isValid(parseISO(startDate))) {
       return format(addMonths(parseISO(startDate), months), "yyyy-MM-dd");
@@ -86,8 +86,6 @@ const ContractTerms: React.FC = () => {
         endDate: updateEndDate(prev.startDate, Number(value)),
       }));
     }
-
-    dispatch(setActiveStep(3));
   };
 
   /** Handles Custom Duration input */

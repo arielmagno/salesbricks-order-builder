@@ -1,5 +1,6 @@
 "use client";
 
+import { setActiveStep } from "@/redux/orderSlice";
 import { RootState } from "@/redux/store";
 import {
   Box,
@@ -10,8 +11,8 @@ import {
   Stepper,
 } from "@mui/material";
 import dynamic from "next/dynamic";
-import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useState, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 const CustomerInfo = dynamic(() => import("../../components/CustomerInfo"), {
   ssr: false,
@@ -36,24 +37,43 @@ const steps = [
 ];
 
 const OrderBuilder = () => {
-  const currentStep = useSelector((state: RootState) => state.order.activeStep);
-  const [activeStep, setActiveStep] = useState(currentStep || 0);
+  const curStep = useSelector((state: RootState) => state.order.activeStep);
+  const dispatch = useDispatch();
+
+  // Ensure Redux state is at least 1
+  const normalizedStep = curStep > 0 ? curStep : 1;
+  const [currentStep, setCurrentStep] = useState(normalizedStep);
   const [completedSteps, setCompletedSteps] = useState<boolean[]>(
     new Array(steps.length).fill(false)
   );
 
+  // Sync Redux state on mount
+  useEffect(() => {
+    if (curStep === 0) {
+      dispatch(setActiveStep(1));
+    }
+  }, [curStep, dispatch]);
+
+  // Sync Redux state whenever currentStep changes
+  useEffect(() => {
+    dispatch(setActiveStep(currentStep));
+  }, [currentStep, dispatch]);
+
   // Handles moving to the next step
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setCompletedSteps((prev) => {
       const updated = [...prev];
-      updated[activeStep] = true;
+      updated[currentStep - 1] = true; // Mark current step as completed
       return updated;
     });
-    setActiveStep((prev) => prev + 1);
-  };
+
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+  }, [currentStep]);
 
   // Handles moving back
-  const handleBack = () => setActiveStep((prev) => prev - 1);
+  const handleBack = useCallback(() => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1)); // Prevent going below 1
+  }, []);
 
   // Handles finalizing the order
   const handleFinalizeOrder = () => {
@@ -63,14 +83,14 @@ const OrderBuilder = () => {
 
   // Renders step content based on active step
   const renderStepContent = () => {
-    switch (activeStep) {
-      case 0:
-        return <CustomerInfo handleNext={handleNext} />;
+    switch (currentStep) {
       case 1:
-        return <ProductSelection />;
+        return <CustomerInfo handleNext={handleNext} />;
       case 2:
-        return <ContractTerms />;
+        return <ProductSelection />;
       case 3:
+        return <ContractTerms />;
+      case 4:
         return <ReviewFineTune />;
       default:
         return null;
@@ -80,7 +100,7 @@ const OrderBuilder = () => {
   return (
     <Container style={{ marginTop: 200 }}>
       <h1>Order Builder</h1>
-      <Stepper activeStep={activeStep} sx={{ marginBottom: 3 }}>
+      <Stepper activeStep={currentStep - 1} sx={{ marginBottom: 3 }}>
         {steps.map((label, index) => (
           <Step key={index} completed={completedSteps[index]}>
             <StepLabel>{label}</StepLabel>
@@ -91,10 +111,10 @@ const OrderBuilder = () => {
       <Box>{renderStepContent()}</Box>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
-        <Button disabled={activeStep === 0} onClick={handleBack}>
+        <Button disabled={currentStep === 1} onClick={handleBack}>
           Back
         </Button>
-        {activeStep === steps.length - 1 ? (
+        {currentStep === steps.length ? (
           <Button
             variant="contained"
             color="success"
@@ -102,7 +122,7 @@ const OrderBuilder = () => {
           >
             Finalize Order
           </Button>
-        ) : activeStep === 0 ? (
+        ) : currentStep === 1 ? (
           <></>
         ) : (
           <Button variant="contained" onClick={handleNext}>

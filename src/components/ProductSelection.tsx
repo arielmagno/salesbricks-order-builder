@@ -8,15 +8,16 @@ import {
   Select,
   SelectChangeEvent,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setActiveStep, setProductSelection } from "../redux/orderSlice";
+import { setProductSelection } from "../redux/orderSlice";
 import { RootState } from "../redux/store";
 
 const ProductSelection = () => {
   const dispatch = useDispatch();
   const { product, plan } = useSelector((state: RootState) => state.order);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const products = [
     {
       id: "ITEM_01",
@@ -50,26 +51,31 @@ const ProductSelection = () => {
     { name: string; price: number }[]
   >([]);
 
+  /** Populate available plans based on the selected product */
+  useEffect(() => {
+    const selected = products.find((p) => p.id === product);
+    setSelectedProduct(product);
+    setAvailablePlans(selected ? selected.plans : []);
+  }, [product, products]);
+
   const handleProductChange = (event: SelectChangeEvent<string>) => {
     const selected = products.find((p) => p.id === event.target.value);
-    setSelectedProduct(event.target.value as string);
+    setSelectedProduct(event.target.value);
     setAvailablePlans(selected ? selected.plans : []);
 
     dispatch(
       setProductSelection({
-        product: event.target.value as string,
+        product: event.target.value,
         plan: "",
         price: 0,
       })
     );
-    dispatch(setActiveStep(2));
   };
 
   const handlePlanChange = (event: SelectChangeEvent<string>) => {
     const selectedPlan = availablePlans.find(
       (p) => p.name === event.target.value
     );
-
     if (selectedPlan) {
       dispatch(
         setProductSelection({
@@ -80,9 +86,6 @@ const ProductSelection = () => {
       );
     }
   };
-
-  const currentStep = useSelector((state: RootState) => state.order.activeStep);
-  console.log("CURSTEP", currentStep);
 
   return (
     <Box>
